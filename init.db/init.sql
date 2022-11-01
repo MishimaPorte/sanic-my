@@ -27,9 +27,3 @@ CREATE TABLE IF NOT EXISTS "transaction" (
     "account_from_id" INT NOT NULL REFERENCES "account" ("id") ON DELETE CASCADE,
     CONSTRAINT "uid_transaction_account_e74600" UNIQUE ("account_from_id", "tx_id")
 );
-CREATE TABLE IF NOT EXISTS "aerich" (
-    "id" SERIAL NOT NULL PRIMARY KEY,
-    "version" VARCHAR(255) NOT NULL,
-    "app" VARCHAR(100) NOT NULL,
-    "content" JSONB NOT NULL
-);
