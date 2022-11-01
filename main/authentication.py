@@ -80,6 +80,8 @@ async def activate(request):
 async def login(login: str, password: str, request):
     user = await ApiUser.get_or_none(login=login)
     if not user == None:
+        if user.is_active = False:
+            return (401, {"error": "activate account first"})
         salted_password = hash(password, user.salt)
         if salted_password == user.password:
             return (200, {"jwt": await generate_jwt(user)})

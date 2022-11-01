@@ -45,6 +45,8 @@ def auth_needed(f):
     async def wrapper(*args, **kwargs):
         if not args[0].ctx.is_authenticated:
             return json({"error": "need authentication"}, status=401)
+        if not args[0].ctx.user.is_active:
+            return json({"error": "inactive account"}, status = 401)
         return await f(*args, **kwargs)
 
     return wrapper
