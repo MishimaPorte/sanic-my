@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: "apidb_sanic"
+      POSTGRES_USER: "apiadmin"
+      POSTGRES_PASSWORD: "admin"
+      POSTGRES_HOST_AUTH_METHOD: trust 
+    restart: always
+    volumes:
+      - ./init.db/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apiadmin -d apidb_sanic"]
+      interval: "2s"
+      timeout: "2s"
+      retries: 5
+  app:
+    build:
+      dockerfile: ./Dockerfile
+    command: bash -c "python main.py"
+    ports:
+      - "8000:8000"
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
