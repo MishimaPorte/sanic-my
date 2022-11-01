@@ -29,6 +29,7 @@ app = Sanic(name="main")
 
 import endpoints
 import middleware
+import ex
 
 if __name__ == "__main__":
     run_async(initdb())
