@@ -21,6 +21,7 @@ async def verify_tx(signature, transaction_id, user_id, account_id, amount):
     s = SHA1.new()
     s.update(f"{ssecret}:{transaction_id}:{user_id}:{account_id}:{amount}".encode())
     my_hash = s.hexdigest()
+
     if my_hash == signature:
         tx = Transaction(value=amount, tx_id=transaction_id, account_from_id=account_id)
         await tx.save()
@@ -97,17 +98,9 @@ async def logout_handler(request: Request) -> HTTPResponse:
 @app.route("/shop")
 async def shop_list(request: Request) -> HTTPResponse:
     catalogue = await Commodity.all()
-    res = []
-    for piece in catalogue:
-        res.append(
-            {
-                "id": piece.id,
-                "title": piece.title,
-                "description": piece.description,
-                "price": piece.price,
-            }
-        )
-    return json(res)
+    cs = CommSerializer()
+    await cs.s(catalogue)
+    return json(cs.data)
 
 
 @app.route("/shop/<item_id:int>/buy", methods=["POST"])
@@ -150,7 +143,7 @@ async def create_acc(request: Request) -> HTTPResponse:
     return json({"id": acc.id, "balance": acc.balance})
 
 
-@app.route("/payment/transfer", methods=["POST"])
+@app.route("/payment/webhook", methods=["POST"])
 async def pay_money(request: Request) -> HTTPResponse:
     acc, tx = await verify_tx(**request.json)
     if tx != None and acc != None:
@@ -159,13 +152,13 @@ async def pay_money(request: Request) -> HTTPResponse:
                 "account": {
                     "id": acc.id,
                     "balance": acc.balance,
-                    "owner_id": acc.owner.id,
+                    "owner_id": acc.owner_id,
                 },
                 "transaction": {
                     "id": tx.id,
                     "tx_id": tx.tx_id,
-                    "account": tx.account_from.id,
-                    "timestamp": tx.timestamp,
+                    "account": tx.account_from_id,
+                    "timestamp": tx.timestamp.isoformat(),
                 },
             }
         )
@@ -177,15 +170,9 @@ async def pay_money(request: Request) -> HTTPResponse:
 @auth_needed
 async def tx_history(request: Request) -> HTTPResponse:
     accs = await request.ctx.user.accounts
-    tx_h = []
-    for acc in accs:
-        for tx in await acc.transaction_history:
-            tx_h.append(tx)
-    res = [
-        {"id": tx.id, "account": tx.account_from, "timestamp": tx.timestamp}
-        for tx in tx_h
-    ]
-    return json(TransSerializer(tx_h).data)
+    acc_s = AccSerializer(transaction_history_serializer = TransSerializer())
+    await acc_s.s(accs)
+    return json(acc_s.data)
 
 
 @app.route("/admin/commodities")

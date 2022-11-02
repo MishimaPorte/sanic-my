@@ -3,7 +3,7 @@ from tortoise.queryset import QuerySet
 from tortoise import fields
 from tortoise.fields.relational import ReverseRelation
 from models import ApiUser, Commodity, Account, Transaction
-
+from datetime import datetime
 
 class Serializer:
     fields: str = None
@@ -30,6 +30,8 @@ class Serializer:
             d = {}
             for field in fields:
                 val = item.__getattribute__(field)
+                if isinstance(val, datetime):
+                    val = val.isoformat()
                 if issubclass(type(val), QuerySet):
                     val = await val
                     if hasattr(
@@ -79,4 +81,4 @@ class AccSerializer(Serializer):
 
 class TransSerializer(Serializer):
     model = Transaction
-    fields = ("id", "tx-id", "value", "account_from", "timestamp")
+    fields = ("id", "tx_id", "value", "account_from", "timestamp")
